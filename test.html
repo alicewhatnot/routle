@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <title>Routle</title>
+        <style>
+            :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#fff;--fg:#1a1a1a;--line:#c9ccd1;--ok:#2e9e5b;--bad:#c0392b;--card:#f4f5f7}
+            @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121213;--fg:#f2f2f2;--line:#3a3a3c;--card:#1d1d1f}}
+            :root[data-theme="dark"]{--bg:#121213;--fg:#f2f2f2;--line:#3a3a3c;--card:#1d1d1f}
+            html{scroll-padding-top:env(safe-area-inset-top,0px)}
+            body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,sans-serif}
+            main{max-width:960px;margin:0 auto;padding:12px}
+            header{border-bottom:2px solid var(--fg);margin-bottom:12px}
+            h1{margin:0 0 6px;font-size:26px;letter-spacing:1px}
+            h1 small{font-size:14px;font-weight:400;letter-spacing:0}
+            .wheel{display:inline-block;width:.8em;height:.8em;border:.17em solid currentColor;border-radius:50%;background:radial-gradient(circle,currentColor 22%,transparent 24%);vertical-align:-.05em}
+            .wrap{display:grid;gap:12px}
+            @media(min-width:720px){.wrap{grid-template-columns:1.1fr 1fr}}
+            .panel{border:2px solid var(--fg);border-radius:8px;padding:8px;background:var(--card)}
+            svg{width:100%;height:auto;display:block}
+            .legend{font-size:13px;margin-top:6px}
+            .legend div{display:flex;align-items:center;gap:8px;margin:3px 0}
+            .legend i{display:inline-block;width:34px;border-top:3px solid var(--fg)}
+            .legend i.d{border-top-style:dashed}
+            .clues{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+            .clue{border:2px solid var(--fg);border-radius:10px;padding:10px;min-height:76px;font-size:14px;background:var(--card)}
+            .clue b{display:block;margin-bottom:4px}
+            .clue.lock{opacity:.5;border-style:dashed}
+            .row{display:flex;gap:8px;margin:12px 0 6px}
+            input{flex:1;min-width:0;font:inherit;padding:10px;border:2px solid var(--fg);border-radius:8px;background:var(--bg);color:var(--fg)}
+            button{font:inherit;font-weight:700;padding:10px 14px;border:2px solid var(--fg);border-radius:8px;background:var(--fg);color:var(--bg)}
+            button:disabled,input:disabled{opacity:.4}
+            #left{font-weight:700;margin:4px 0}
+            #msg{min-height:20px;font-size:14px;font-weight:600}
+            ul{list-style:none;padding:0;margin:6px 0}
+            li{padding:6px 10px;border:1px solid var(--line);border-radius:6px;margin-bottom:4px;font-size:14px}
+            li.w{color:var(--bad)}li.r{color:var(--ok);font-weight:700}
+        </style>
+    </head>
+
+    <body>
+        <main>
+            <header><h1>R<span class="wheel"></span>UTLE <small>– a Wordle-inspired game</small></h1></header>
+            <div class="wrap">
+                <div class="panel">
+                    <svg id="map" viewBox="0 0 100 100"></svg>
+                    <div class="legend">
+                    <div><i class="d"></i> for eliminated routes</div>
+                    <div><i></i> for possible routes</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="clues" id="clues"></div>
+                    <div class="row">
+                    <input id="in" list="dl" placeholder="Guess the destination…" autocomplete="off">
+                    <datalist id="dl"></datalist>
+                    <button id="go">Guess</button>
+                    </div>
+                    <div id="left"></div>
+                    <div id="msg"></div>
+                    <div><b>Previous guesses</b><ul id="prev"></ul></div>
+                </div>
+            </div>
+        </main>
+
+        <!--Script starts here, it is very long-->
+        <script>
+            // name, x, y on the 100x100 map
+            const N={BS:["Bus Station",50,52],HS:["High Street",50,34],MS:["Market Square",28,42],LB:["Library",72,42],
+            HP:["Hospital",24,68],UN:["University",76,68],PG:["Park Gate",50,78],HB:["Harbour",86,88],
+            AP:["Airport",86,18],CS:["Castle",12,22],ST:["Stadium",16,90],RP:["Retail Park",50,10]};
+            // every route needs a different destination initial; "via" is used for clue 3
+            const R=[
+            {n:"7", s:["BS","HS","RP"],            via:"HS",col:"#e6194b"},
+            {n:"14",s:["AP","LB","BS","MS","CS"],  via:"MS",col:"#f58231"},
+            {n:"22",s:["RP","HS","BS","HP","ST"],  via:"HP",col:"#3cb44b"},
+            {n:"31",s:["CS","MS","BS","PG","HB"],  via:"PG",col:"#4363d8"},
+            {n:"46",s:["RP","HS","LB","UN"],       via:"LB",col:"#911eb4"},
+            {n:"58",s:["ST","HP","PG","UN","AP"],  via:"PG",col:"#0aa5b5"},
+            {n:"63",s:["HB","UN","LB"],            via:"UN",col:"#b8860b"}];
+            const dest=r=>N[r.s[r.s.length-1]][0];
+            const T=R[Math.floor(Date.now()/864e5)%R.length];      // today's route
+            const MAX=4;
+            let wrong=[],won=false,lost=false;
+
+            const clueText=[
+            `This route has ${T.s.length} stops.`,
+            `It starts at ${N[T.s[0]][0]}.`,
+            `It passes through ${N[T.via][0]}.`,
+            `The destination begins with “${dest(T)[0]}”.`];
+            const matches=[
+            r=>r.s.length===T.s.length,
+            r=>r.s[0]===T.s[0],
+            r=>r.s.includes(T.via),
+            r=>dest(r)[0]===dest(T)[0]];
+
+            const $=id=>document.getElementById(id);
+            $("dl").innerHTML=R.map(r=>`<option value="${dest(r)}">`).join("");
+
+            function shown(){return (won||lost)?(lost?MAX:Math.min(MAX,wrong.length+1)):Math.min(MAX,wrong.length+1)}
+            function possible(r){
+            if(wrong.includes(r))return false;
+            for(let k=0;k<shown();k++)if(!matches[k](r))return false;
+            return true;
+            }
+            function render(){
+            const k=shown();
+            $("clues").innerHTML=clueText.map((t,i)=>i<k
+                ?`<div class="clue"><b>Clue ${i+1}</b>${t}</div>`
+                :`<div class="clue lock"><b>Clue ${i+1}</b>🔒 Unlocks after a wrong guess</div>`).join("");
+            // map
+            let m="";
+            R.forEach((r,i)=>{
+                const d=(i-3)*.7,pts=r.s.map(id=>`${N[id][1]+d},${N[id][2]+d}`).join(" ");
+                const live=possible(r)||(won&&r===T);
+                m+=`<polyline points="${pts}" fill="none" stroke="${r.col}" stroke-width="${won&&r===T?1.8:1.1}" stroke-linejoin="round" ${live?"":'stroke-dasharray="2 2" opacity=".35"'}/>`;
+            });
+            Object.values(N).forEach(([nm,x,y])=>{
+                m+=`<circle cx="${x}" cy="${y}" r="1.5" fill="var(--bg)" stroke="var(--fg)" stroke-width=".6"/>`
+                +`<text x="${x}" y="${y+4.6}" font-size="3.4" text-anchor="middle" fill="var(--fg)">${nm}</text>`;
+            });
+            R.forEach((r,i)=>{ // route number badge at the end of each route
+                const d=(i-3)*.7,[,x,y]=N[r.s[r.s.length-1]];
+                m+=`<circle cx="${x+d}" cy="${y+d-3.6}" r="2.6" fill="${r.col}"/><text x="${x+d}" y="${y+d-2.6}" font-size="2.8" font-weight="700" text-anchor="middle" fill="#fff">${r.n}</text>`;
+            });
+            $("map").innerHTML=m;
+            $("left").textContent="Guesses left: "+(won?MAX-wrong.length-0:Math.max(0,MAX-wrong.length));
+            $("prev").innerHTML=wrong.map(r=>`<li class="w">✗ ${dest(r)} (route ${r.n})</li>`).join("")+(won?`<li class="r">✓ ${dest(T)} (route ${T.n})</li>`:"");
+            $("in").disabled=$("go").disabled=won||lost;
+            }
+            function guess(){
+            if(won||lost)return;
+            const v=$("in").value.trim().toLowerCase(),r=R.find(x=>dest(x).toLowerCase()===v);
+            if(!r){$("msg").textContent="Pick a destination from the list.";return}
+            if(wrong.includes(r)){$("msg").textContent="You've already guessed that one.";return}
+            $("in").value="";
+            if(r===T){won=true;$("msg").textContent=`🎉 Route ${T.n} to ${dest(T)} – solved in ${wrong.length+1}!`}
+            else{wrong.push(r);
+                if(wrong.length>=MAX){lost=true;$("msg").textContent=`Out of guesses! It was route ${T.n} to ${dest(T)}.`}
+                else $("msg").textContent="Not that one – a new clue is unlocked."}
+            render();
+            }
+            $("go").onclick=guess;
+            $("in").onkeydown=e=>{if(e.key==="Enter")guess()};
+            render();
+        </script>
+    </body>
+</html>

@@ -1,0 +1,99 @@
+
+const map = L.map('locations-map');
+
+
+
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+   maxZoom: 19,
+   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+
+
+
+
+// Default view until a game starts
+map.setView([56.8, -4.2], 7);
+
+
+
+
+// Marker look, like Ember's map: a white outline around a coloured centre.
+// 'color' is the outline, 'fillColor' is the centre.
+const STOP_STYLE = {
+   radius: 4,
+   color: '#fff',
+   weight: 1.5,
+   fillColor: '#222',
+   fillOpacity: 1
+};
+// Start/end stops: same look with a red centre, a bit bigger so they stand out
+const ENDPOINT_STYLE = { ...STOP_STYLE, radius: 5, fillColor: '#c0392b' };
+
+
+
+
+// Called by game.js whenever a new route is chosen
+let startMarker = null;
+window.focusStart = city => {
+   if (startMarker) startMarker.remove();
+   const latlng = [city.lat, city.lng];
+   startMarker = L.circleMarker(latlng, ENDPOINT_STYLE)
+       .bindTooltip(city.name, { permanent: true, direction: 'top', offset: [0, -8] })
+       .addTo(map);
+   startMarker.bringToFront();   // keep the red dot above the black stop dots
+   map.setView(latlng, 9);
+};
+
+
+
+
+// Background dots for the rest of the network
+fetch('json/ember_locations_detailed.json')
+   .then(res => {
+       if (!res.ok) throw new Error('HTTP ' + res.status);
+       return res.json();
+   })
+   .then(locations => {
+       locations.forEach(loc => {
+           L.circleMarker([loc.latitude, loc.longitude], STOP_STYLE)
+               .bindPopup(loc.name)
+               .addTo(map);
+       });
+       if (startMarker) startMarker.bringToFront();   // dots may load after the start marker
+   })
+   .catch(err => console.error('Could not load ember_locations_detailed.json:', err));
+
+
+
+
+// attempt to make the routes visible
+// Background dots for the rest of the network
+fetch('json/ember_routes.json')
+   .then(res => {
+       if (!res.ok) throw new Error('HTTP ' + res.status);
+       return res.json();
+   })
+   .then(routes => {
+        routes.forEach(route => {
+            routes.forEach(stop => {
+                let stop1 = [stop.start_lat, stop.start_lng];
+                let stop2 = [stop.end_lat, stop.end_lng];
+                L.Routing.control({ waypoints: [ L.latLng(stop1), L.latLng(stop2) ] }).addTo(map);
+            }
+            )
+        })
+
+
+
+    //    locations.forEach(loc => {
+    //        L.circleMarker([loc.latitude, loc.longitude], STOP_STYLE)
+    //            .bindPopup(loc.name)
+    //            .addTo(map);
+    ///   }
+    // );
+    //    if (startMarker) startMarker.bringToFront();   // dots may load after the start marker
+   })
+   .catch(err => console.error('Could not load ember_locations_detailed.json:', err));
+
+   

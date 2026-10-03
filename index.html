@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Routle</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div id="timer" aria-label="Time played">00:00</div>
+
+    <div id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+        <div class="panel">
+            <div class="head">
+                <h2 id="endTitle"></h2>
+            </div>
+
+            <dl class="stats">
+                <div>
+                    <dt>Time:</dt>
+                    <dd id="endTime">00:00</dd>
+                </div>
+
+                <div>
+                    <dt>Number of guesses:</dt>
+                    <dd id="endGuesses">0</dd>
+                </div>
+
+                <div>
+                    <dt>Answer:</dt>
+                    <dd id="endAnswer"></dd>
+                </div>
+            </dl>
+
+            <button id="again" type="button">Play again</button>
+        </div>
+    </div>
+
+    <main>
+        <header>
+            <h1 style="text-align: center;">
+            R<img src="emberlogo.png" style="width: 30px; height: 30px; transform: translate(0px, 5px);" alt=""><img src="image2.png" alt="">UTLE
+            <small style="display: block; font-size: 12px;">
+                A Wordle-inspired bus route guessing game
+            </small>
+        </h1>
+            
+        </header>
+
+        <div class="wrap">
+            <div class="panel">
+                <div id="locations-map"></div>
+            </div>
+
+            <div>
+                <div id="start" class="start"></div>
+                <div class="clues" id="clues"></div>
+                <div class="clue-logo" aria-hidden="true">
+                <svg viewBox="0 0 64 64" width="90" height="90" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="17" r="15" fill="#2f8f8a"/>  <!-- top: dark teal -->
+                    <circle cx="17" cy="45" r="15" fill="#c4e8dc"/>  <!-- bottom left: mint -->
+                    <circle cx="47" cy="45" r="15" fill="#4a9a9a"/>  <!-- bottom right: mid teal -->
+                </svg>
+                </div>
+                <div class="row">
+                    <input id="in" list="dl" placeholder="Guess the destination…" autocomplete="off">
+                    <datalist id="dl"></datalist>
+                    <button id="go">Guess</button>
+                </div>
+                <div id="left"></div>
+                <div id="msg"></div>
+                <div><b>Previous guesses</b><ul id="prev"></ul></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>

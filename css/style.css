@@ -1,0 +1,256 @@
+:root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: rgba(188, 214, 203);
+    --fg: #1a1a1a;
+    --line: #c9ccd1;
+    --ok: #2e9e5b;
+    --bad: #c0392b;
+    --card: #f4f5f7;
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not[data-theme="dark"] {
+        --bg: #121213;
+        --fg: #f2f2f2;
+        --line: #3a3a3c;
+        --card: #1d1d1f;
+    }
+}
+
+:root([data-theme="light"]) {
+        --bg: #121213;
+        --fg: #f2f2f2;
+        --line: #3a3a3c;
+        --card: #1d1d1f;
+}
+
+
+
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+main {
+    box-sizing: border-box;
+    width: min(960px, calc(100% - 24px)); /* keeps a small side gap on phones */
+    margin: 24px auto;                    /* gap above and below the panel */
+    padding: 16px;
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Header */
+header { border-bottom: 2px solid var(--fg); margin-bottom: 12px; }
+h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: 1px; }
+h1 small { font-size: 14px; font-weight: 400; letter-spacing: 0; }
+
+/* Layout */
+.wrap { display: grid; gap: 12px; }
+@media (min-width: 720px) { .wrap { grid-template-columns: 1.1fr 1fr; } }
+
+.panel {
+    border: 2px solid var(--fg);
+    border-radius: 8px;
+    padding: 8px;
+    background: var(--card);
+}
+
+/* Map (Leaflet needs an explicit height) */
+#locations-map {
+    height: 600px;
+    border-radius: 6px;
+}
+@media (max-width: 719px) {
+    #locations-map { height: 300px; }
+}
+
+/* Start city */
+.start {
+    font-size: 18px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border: 2px solid var(--fg);
+    border-radius: 10px;
+    background: var(--card);
+}
+.start b { margin-right: 6px; }
+
+/* Clues */
+.clues { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.clue {
+    border: 2px solid var(--fg);
+    border-radius: 10px;
+    padding: 10px;
+    min-height: 76px;
+    font-size: 14px;
+    background: var(--card);
+}
+.clue b { display: block; margin-bottom: 4px; }
+.clue.lock { opacity: .5; border-style: dashed; }
+
+/* Guess input */
+.row { display: flex; gap: 8px; margin: 12px 0 6px; }
+
+input {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    padding: 10px;
+    border: 2px solid var(--fg);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--fg);
+}
+
+button {
+    font: inherit;
+    font-weight: 700;
+    padding: 10px 14px;
+    border: 2px solid var(--fg);
+    border-radius: 8px;
+    background: var(--fg);
+    color: var(--bg);
+}
+button:disabled, input:disabled { opacity: .4; }
+
+/* Status */
+#left { font-weight: 700; margin: 4px 0; }
+#msg { min-height: 20px; font-size: 14px; font-weight: 600; }
+
+ul { list-style: none; padding: 0; margin: 6px 0; }
+li {
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+li.w { color: var(--bad); }
+li.r { color: var(--ok); font-weight: 700; }
+
+/* Timer */
+#timer {
+    position: fixed;
+    top: 14px;
+    right: 18px;
+    font: 600 1.1rem/1 "Courier New", monospace;
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--line);
+    padding: 8px 12px;
+    border-radius: 8px;
+    z-index: 1000;
+}
+
+/* End game screen */
+#end {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 13, 20, 0.78);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 2000;
+}
+
+#end.open {
+    display: flex;
+}
+
+#end .panel {
+    width: min(760px, 100%);
+    background: var(--card);
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    padding: 22px 24px 26px;
+}
+
+#end .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+#end .head h2 {
+    margin: 0;
+    font-weight: 400;
+    font-size: clamp(1.5rem, 4.5vw, 2.3rem);
+    text-align: center;
+    flex: 1;
+}
+
+#end .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    margin-top: 22px;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+}
+
+#end .stats div {
+    padding: 0 14px;
+}
+
+#end .stats div + div {
+    border-left: 2px solid var(--ink);
+}
+
+#end .stats dt {
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+#end .stats dd {
+    margin: 6px 0 0;
+    font: 600 1.5rem "Courier New", monospace;
+    word-break: break-word;
+}
+
+#again {
+    display: block;
+    margin: 26px auto 0;
+    padding: 12px 30px;
+    font: inherit;
+    font-size: 1.05rem;
+    color: rgba(187, 213, 203);
+    background: var(--dot-left);
+    background-color: rgba(59, 137, 108);
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+#again:hover,
+#again:focus-visible {
+    background: #fff;
+    outline: 2px solid var(--dot-top);
+    outline-offset: 3px;
+}
+
+@media (max-width: 520px) {
+    #end .stats {
+        grid-template-columns: 1fr;
+    }
+
+    #end .stats div + div {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+        margin-top: 10px;
+        padding-top: 10px;
+    }
+}
+
+.clue-logo { display: flex; align-items: center; justify-content: center; } .clue-logo svg { max-width: 100%; height: auto; }
+
